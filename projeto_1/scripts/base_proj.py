@@ -42,6 +42,8 @@ media = []
 centro = []
 atraso = 1.5E9 # 1 segundo e meio. Em nanossegundos
 viu_linhas=False
+viu_linha1=False
+viu_linha2=False
 
 area = 0.0 # Variavel com a area do maior contorno
 
@@ -247,9 +249,14 @@ def find_circles(frame):
     cv2.imshow('Final', imagem)
 
     if linha1 and linha2:
-        return True
+        return 0
+    elif linha1 and not linha2:
+        return 1
+    elif linha2 and not linha1:
+        return 2
     else:
         return False
+
 
 
 
@@ -261,6 +268,8 @@ def roda_todo_frame(imagem):
     global media
     global centro
     global viu_linhas
+    global viu_linha1
+    global viu_linha2
     global resultados
 
     categoria="dog"
@@ -279,8 +288,12 @@ def roda_todo_frame(imagem):
         # chamada resultados
         centro, imagem, resultados =  visao_module.processa(cv_image)  
         vc_temp = find_circles(cv_image)
-        if vc_temp:
-            viu_linhas = True      
+        if vc_temp==0:
+            viu_linhas = True 
+        elif vc_temp==1:
+            viu_linha1=True
+        elif vc_temp==2:
+            viu_linha2=True     
         for r in resultados:
             if r[0]==categoria:
                 achou_obj=True
@@ -321,12 +334,29 @@ if __name__=="__main__":
             for r in resultados:
                 print(r)
             #velocidade_saida.publish(vel)
-            rospy.sleep(0.1)
+            rospy.sleep(0.05)
+
 
             if viu_linhas:
-                vel = Twist(Vector3(0.3,0,0), Vector3(0,0,0))
+                print(" duas linhassssssssssssssssssssssssss")
+                vel = Twist(Vector3(0.1,0,0), Vector3(0,0,0))
                 velocidade_saida.publish(vel)
                 viu_linhas = False
+                continue
+
+            elif viu_linha1:
+                print(" 1111111111111111111111111111111111111111111")
+
+                vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.1))
+                velocidade_saida.publish(vel)
+                viu_linha1 = False
+                continue
+
+            elif viu_linha2:
+                print(" 2222222222222222222222222222222222222222")
+                vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.1))
+                velocidade_saida.publish(vel)
+                viu_linha2 = False
                 continue
 
     except rospy.ROSInterruptException:
