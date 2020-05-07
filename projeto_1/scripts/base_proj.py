@@ -31,6 +31,7 @@ from ar_track_alvar_msgs.msg import AlvarMarker, AlvarMarkers
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
+from sensor_msgs.msg import LaserScan
 
 import visao_module
 
@@ -125,6 +126,20 @@ def calcula_m(x2,x1,y2,y1):
 def calcula_h(x,y,m):
     return y - m * x
 
+
+dist = []
+def scaneou(dado):
+	#global dist
+	d = (np.array(dado.ranges)[0]).round(decimals=2)
+	dist.append(d)
+
+
+	print("Faixa valida: ", dado.range_min , " - ", dado.range_max )
+	print("Leituras:")
+	print(dist)
+	#print(np.array(dado.ranges).round(decimals=2))
+	#print("Intensities")
+	#print(np.array(dado.intensities).round(decimals=2))
 
 
 def recebe(msg):
@@ -246,7 +261,9 @@ def find_circles(frame):
             intersecao=intersecao_retas((m1,h1),(m2,h2))                
             cv2.circle(imagem,(intersecao[0],intersecao[1]), 15, (100,50,0), -1)
 
-    cv2.imshow('Final', imagem)
+    imagem_final=frame+imagem
+    cv2.imshow('Final', imagem_final)
+    cv2.waitKey(1)
 
     if linha1 and linha2:
         return 0
@@ -284,9 +301,12 @@ def roda_todo_frame(imagem):
     try:
         antes = time.clock()
         cv_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
+
+        media, centro, maior_area =  visao_module.identifica_cor(cv_image)
+
         # Note que os resultados já são guardados automaticamente na variável
         # chamada resultados
-        centro, imagem, resultados =  visao_module.processa(cv_image)  
+        centro_detect, imagem, resultados =  visao_module.processa(cv_image)  
         vc_temp = find_circles(cv_image)
         if vc_temp==0:
             viu_linhas = True 
@@ -304,6 +324,7 @@ def roda_todo_frame(imagem):
         depois = time.clock()
         # Desnecessário - Hough e MobileNet já abrem janelas
         #cv2.imshow("Camera", cv_image)
+
     except CvBridgeError as e:
         print('ex', e)
     
@@ -312,8 +333,9 @@ if __name__=="__main__":
 
     topico_imagem = "/camera/rgb/image_raw/compressed"
 
-    recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
+    recebedor_frames = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
     recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+    recebe_scan = rospy.Subscriber("/scan", LaserScan, scaneou)
 
 
     print("Usando ", topico_imagem)
@@ -325,39 +347,102 @@ if __name__=="__main__":
 
     # Exemplo de categoria de resultados
     # [('chair', 86.965459585189819, (90, 141), (177, 265))]
-
+    acabou = False
+    encontrou=False
+    na_pista=True
     try:
         # Inicializando - por default gira no sentido anti-horário
         # vel = Twist(Vector3(0,0,0), Vector3(0,0,math.pi/10.0))
         
         while not rospy.is_shutdown():
-            for r in resultados:
-                print(r)
+            #for r in resultados:
+                #print(r)
             #velocidade_saida.publish(vel)
-            rospy.sleep(0.05)
+            #rospy.sleep(0.01)
+            if na_pista:
+            
+                if viu_linhas:
+                    print(" duas linhassssssssssssssssssssssssss")
+                    vel = Twist(Vector3(0.5,0,0), Vector3(0,0,0))
+                    velocidade_saida.publish(vel)
+
+                    viu_linhas = False
+                    continue
+
+                elif viu_linha1:
+                    print(" 1111111111111111111111111111111111111111111")
+
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.08))
+
+                    velocidade_saida.publish(vel)
+
+                    viu_linha1 = False
+
+                    continue
+
+                elif viu_linha2:
+                    print(" 2222222222222222222222222222222222222222")
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.08))
+                    velocidade_saida.publish(vel)
+
+                    viu_linha2 = False
+                    continue
 
 
-            if viu_linhas:
-                print(" duas linhassssssssssssssssssssssssss")
-                vel = Twist(Vector3(0.1,0,0), Vector3(0,0,0))
-                velocidade_saida.publish(vel)
-                viu_linhas = False
-                continue
 
-            elif viu_linha1:
-                print(" 1111111111111111111111111111111111111111111")
+            if len(media) !=0 and len(centro) != 0:
+                vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
 
-                vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.1))
-                velocidade_saida.publish(vel)
-                viu_linha1 = False
-                continue
+                #print("Média dos vermelhos: {0}, {1}".format(media[0], media[1]))
+                #print("Centro dos vermelhos: {0}, {1}".format(centro[0], centro[1]))
+                if not acabou:
+                   # na_pista=False
+                   p=len(dist)-1 
+                   if p>0: 
+                       if dist[p]<=2:
 
-            elif viu_linha2:
-                print(" 2222222222222222222222222222222222222222")
-                vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.1))
-                velocidade_saida.publish(vel)
-                viu_linha2 = False
-                continue
+				# ajusta a direcao ate encontrar o centro do objeto
+				# quando encontra comeca a ir para frente, mas o ajuste de direcao continua ocorrendo, para evitar possiveis desvios
+                        if (media[0] > (centro[0])):
+                            vel = Twist(Vector3(0,0,0), Vector3(0,0,-0.1))
+                        if (media[0] < (centro[0])):
+                            vel = Twist(Vector3(0,0,0), Vector3(0,0,0.1))
+
+                        if (abs(media[0] - centro[0])<=10): 
+                            vel = Twist(Vector3(0.1,0,0), Vector3(0,0,0.0))
+                            encontrou=True
+                        velocidade_saida.publish(vel)
+                        rospy.sleep(0.1)
+
+                        if encontrou and not acabou:
+                            print("encontrouuuuuuuuuuuuuuuu and not acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
+
+                        #scanner precisa haver detectado algo
+                          #  print(dist[p])
+
+                            if dist[p] <= 1.5: #a partir desta distancia anda mais devagar e para de ajustar a direcao
+                                anda = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
+                                velocidade_saida.publish(anda)
+                                rospy.sleep(0.1)
+
+
+
+                            if dist[p]<=0.2:#a partir deste ponto, o robo para e o loop nao recomeca
+                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0.4))
+                                velocidade_saida.publish(velocidade)
+                                rospy.sleep(4.5)
+                                acabou=True
+                                print("acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
+
+                            if acabou:
+                                na_pista=True
+                                print("vaiiii pra pistaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
+                                velocidade_saida.publish(velocidade)
+                                rospy.sleep(2)
+
+
+
 
     except rospy.ROSInterruptException:
         print("Ocorreu uma exceção com o rospy")
