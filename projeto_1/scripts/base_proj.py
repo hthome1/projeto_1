@@ -350,6 +350,7 @@ if __name__=="__main__":
     acabou = False
     encontrou=False
     na_pista=True
+    pegou_creeper=False
     try:
         # Inicializando - por default gira no sentido anti-horário
         # vel = Twist(Vector3(0,0,0), Vector3(0,0,math.pi/10.0))
@@ -395,11 +396,11 @@ if __name__=="__main__":
 
                 #print("Média dos vermelhos: {0}, {1}".format(media[0], media[1]))
                 #print("Centro dos vermelhos: {0}, {1}".format(centro[0], centro[1]))
-                if not acabou:
+                if not acabou and not pegou_creeper:
                    # na_pista=False
                    p=len(dist)-1 
                    if p>0: 
-                       if dist[p]<=2:
+                       #if dist[p]<=3.5:
 
 				# ajusta a direcao ate encontrar o centro do objeto
 				# quando encontra comeca a ir para frente, mas o ajuste de direcao continua ocorrendo, para evitar possiveis desvios
@@ -427,7 +428,7 @@ if __name__=="__main__":
 
 
 
-                            if dist[p]<=0.2:#a partir deste ponto, o robo para e o loop nao recomeca
+                            if dist[p]<=0.3:#a partir deste ponto, o robo para e o loop nao recomeca
                                 velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0.4))
                                 velocidade_saida.publish(velocidade)
                                 rospy.sleep(4.5)
@@ -436,6 +437,7 @@ if __name__=="__main__":
 
                             if acabou:
                                 na_pista=True
+                                pegou_creeper=True
                                 print("vaiiii pra pistaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                                 velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
                                 velocidade_saida.publish(velocidade)
