@@ -21,7 +21,7 @@ global base
 instrucoes={
     "color": "green",
     "base": "bird",
-    id: 21
+    "id": 22
 }
 
 

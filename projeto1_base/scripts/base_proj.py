@@ -261,7 +261,7 @@ if __name__=="__main__":
                 #print("Centro dos vermelhos: {0}, {1}".format(centro[0], centro[1]))
                 if not acabou and not pegou_creeper and not achou_base:
                     print(id)
-                    if id ==22:
+                    if id ==visao_module.instrucoes["id"]:
                                 # na_pista=False
                                 p=len(dist)-1 
                                 if p>0: 
