@@ -19,9 +19,9 @@ import mobilenet_simples as mnet
 global color
 global base
 instrucoes={
-    "color": "green",
-    "base": "bird",
-    "id": 22
+    "color": "blue",
+    "base": "cat",
+    "id": 11
 }
 
 
@@ -70,8 +70,8 @@ def cor_creeper(frame, color):
         cor_maior = np.array([67, 255, 255])
         segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
     elif color == "blue":
-            cor_menor = np.array([89, 50, 50])
-            cor_maior = np.array([102, 255, 255])
+            cor_menor = np.array([94, 50, 50])
+            cor_maior = np.array([104, 255, 255])
             segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
     elif color == "pink":
             cor_menor = np.array([138, 50, 50])
