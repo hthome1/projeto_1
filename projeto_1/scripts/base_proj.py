@@ -201,11 +201,15 @@ if __name__=="__main__":
     tfl = tf2_ros.TransformListener(tf_buffer)
 
     tolerancia = 25
+    tolX=0.63
 
     # Exemplo de categoria de resultados
     # [('chair', 86.965459585189819, (90, 141), (177, 265))]
     acabou = False
     encontrou=False
+    encontrouX=False
+    encontrouY=False
+
     na_pista=True
     pegou_creeper=False
     achou_base=False
@@ -223,7 +227,7 @@ if __name__=="__main__":
             
                 if viu_linhas:
                    # print(" duas linhassssssssssssssssssssssssss")
-                    vel = Twist(Vector3(0.5,0,0), Vector3(0,0,0))
+                    vel = Twist(Vector3(0.25,0,0), Vector3(0,0,0))
                     velocidade_saida.publish(vel)
 
                     viu_linhas = False
@@ -232,7 +236,7 @@ if __name__=="__main__":
                 elif viu_linha1:
                   #  print(" 1111111111111111111111111111111111111111111")
 
-                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.08))
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.12))
 
                     velocidade_saida.publish(vel)
 
@@ -242,12 +246,13 @@ if __name__=="__main__":
 
                 elif viu_linha2:
                    # print(" 2222222222222222222222222222222222222222")
-                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.08))
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.12))
                     velocidade_saida.publish(vel)
 
                     viu_linha2 = False
                     continue
 
+            print("Id: ", id)
 
 
             if len(media) !=0 and len(centro) != 0 and maior_area>=3000:
@@ -256,55 +261,63 @@ if __name__=="__main__":
 
                 #print("Média dos vermelhos: {0}, {1}".format(media[0], media[1]))
                 #print("Centro dos vermelhos: {0}, {1}".format(centro[0], centro[1]))
-                if not acabou and not pegou_creeper and not achou_base:
-                   # na_pista=False
-                   p=len(dist)-1 
-                   if p>0: 
-                       #if dist[p]<=3.5:
+                if (not acabou and not pegou_creeper) or (not acabou and not achou_base):
+                    if id ==visao_module.instrucoes["id"]:
+                                # na_pista=False
+                                p=len(dist)-1 
+                                if p>0: 
+                                    #if dist[p]<=3.5:
 
-				# ajusta a direcao ate encontrar o centro do objeto
-				# quando encontra comeca a ir para frente, mas o ajuste de direcao continua ocorrendo, para evitar possiveis desvios
-                        if (media[0] > (centro[0])):
-                            vel = Twist(Vector3(0,0,0), Vector3(0,0,-0.1))
-                        if (media[0] < (centro[0])):
-                            vel = Twist(Vector3(0,0,0), Vector3(0,0,0.1))
+                                # ajusta a direcao ate encontrar o centro do objeto
+                                # quando encontra comeca a ir para frente, mas o ajuste de direcao continua ocorrendo, para evitar possiveis desvios
+                                        if (media[0] > (centro[0])):
+                                            vel = Twist(Vector3(0,0,0), Vector3(0,0,-0.1))
+                                        if (media[0] < (centro[0])):
+                                            vel = Twist(Vector3(0,0,0), Vector3(0,0,0.1))
 
-                        if (abs(media[0] - centro[0])<=10): 
-                            vel = Twist(Vector3(0.1,0,0), Vector3(0,0,0.0))
-                            encontrou=True
-                        velocidade_saida.publish(vel)
-                        rospy.sleep(0.1)
+                                        if (abs(media[0] - centro[0])<=10): 
+                                            vel = Twist(Vector3(0.15,0,0), Vector3(0,0,0.0))
+                                            encontrou=True
+                                        velocidade_saida.publish(vel)
+                                        rospy.sleep(0.1)
 
-                        if encontrou and not acabou:
-                         #   print("encontrouuuuuuuuuuuuuuuu and not acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
+                                        if encontrou and not acabou:
+                                        #   print("encontrouuuuuuuuuuuuuuuu and not acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
 
-                        #scanner precisa haver detectado algo
-                          #  print(dist[p])
+                                        #scanner precisa haver detectado algo
+                                        #  print(dist[p])
 
-                            if dist[p] <= 1.5: #a partir desta distancia anda mais devagar e para de ajustar a direcao
-                                anda = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
-                                velocidade_saida.publish(anda)
-                                rospy.sleep(0.1)
+                                            if dist[p] <= 1.5: #a partir desta distancia anda mais devagar e para de ajustar a direcao
+                                                anda = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
+                                                velocidade_saida.publish(anda)
+                                                rospy.sleep(0.1)
 
 
 
-                            if dist[p]<=0.3:#a partir deste ponto, o robo para e o loop nao recomeca
-                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
-                                velocidade_saida.publish(velocidade)
-                                raw_input()
-                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0.4))
-                                velocidade_saida.publish(velocidade)
-                                rospy.sleep(4.5)
-                                acabou=True
-                              #  print("acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
+                                            if dist[p]<=0.25:#a partir deste ponto, o robo para e o loop nao recomeca
+                                                if x>tolX and not encontrouX:
+                                                    vel = Twist(Vector3(0.05,0,0), Vector3(0,0,0.0))
+                                                else:
+                                                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.0))
+                                                    #rospy.sleep(0.5)
+                                                    encontrouX=True
+                                                if encontrouX:
+                                                    velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
+                                                    velocidade_saida.publish(velocidade)
+                                                    raw_input()
+                                                    velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0,- 0.2))
+                                                    velocidade_saida.publish(velocidade)
+                                                    rospy.sleep(4.5)
+                                                    acabou=True
+                                            #  print("acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
 
-                            if acabou:
-                                na_pista=True
-                                pegou_creeper=True
-                              #  print("vaiiii pra pistaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
-                                velocidade_saida.publish(velocidade)
-                                rospy.sleep(2)
+                                            if acabou:
+                                                na_pista=True
+                                                pegou_creeper=True
+                                            #  print("vaiiii pra pistaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
+                                                velocidade_saida.publish(velocidade)
+                                                rospy.sleep(2)
 
            #########areA passarinho!!!!!!!!!!!!!!
 
@@ -333,34 +346,44 @@ if __name__=="__main__":
 
                     elif (centro_detect[0]- tolerancia) < x_objeto < (centro[0] + tolerancia): # Gosto de usar a < b < c do Python. Não seria necessário neste caso
                         # Segue em frente
-                        vel = Twist(Vector3(0.35,0,0), Vector3(0,0,-0.02))
+                        vel = Twist(Vector3(0.2,0,0), Vector3(0,0,-0.02))
                         velocidade_saida.publish(vel)
                         achou_obj = False
                         print("FRENTE")
-                        velocidade_saida.publish(vel)
 
+
+                        p=len(dist)-1 
+                        if p>0: 
+                            if dist[p]<=1:#a partir deste ponto, o robo para e o loop nao recomeca
+                                    rospy.sleep(7)
+                                    vel = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
+                                    achou_base=True
+        
+
+                            elif dist[p] <= 2: #a partir desta distancia anda mais devagar e para de ajustar a direcao
+                                    vel = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
+                                   # rospy.sleep(0.1)
+                                    print("gatoooooooooooooooo")
+
+                                
+                        velocidade_saida.publish(vel)
                         continue
 
-                    rospy.sleep(0.25)
 
-
-                    p=len(dist)-1 
-                    if p>0: 
-
-                            if dist[p] <= 1.5: #a partir desta distancia anda mais devagar e para de ajustar a direcao
-                                anda = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
-                                velocidade_saida.publish(anda)
-                                rospy.sleep(0.1)
+            if achou_base:
+                        print("miloooooooooooooooo")
+                        velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
+                        velocidade_saida.publish(velocidade)
+                        raw_input()
+                                    
+                   # rospy.sleep(0.05)
 
 
 
-                            if dist[p]<=0.55:#a partir deste ponto, o robo para e o loop nao recomeca
-                                velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
-                                velocidade_saida.publish(velocidade)
-                                raw_input()
-                                achou_base=True
+                          #  velocidade_saida.publish(velocidade)
                             
-                                print("acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
+                            
+                               # print("acabouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")
 
 
 
