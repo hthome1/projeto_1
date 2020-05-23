@@ -19,9 +19,9 @@ import mobilenet_simples as mnet
 global color
 global base
 instrucoes={
-    "color": "blue",
-    "base": "cat",
-    "id": 11
+    "color": "green",
+    "base": "dog",
+    "id": 21
 }
 
 

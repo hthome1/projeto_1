@@ -175,7 +175,7 @@ class MoveGroupPythonIntefaceTutorial(object):
         
         move_group = self.move_group
 
-        init_position = (0.238, 0.0, 0.3)
+        init_position = (0.3, 0, 0.28)
 
 
         move_group.set_position_target(init_position)

@@ -298,7 +298,7 @@ if __name__=="__main__":
 
 
 
-                                            if dist[p]<=0.25:#a partir deste ponto, o robo para e o loop nao recomeca
+                                            if dist[p]<=0.28:#a partir deste ponto, o robo para e o loop nao recomeca
                                                 if x>tolX and not encontrouX:
                                                     vel = Twist(Vector3(0.05,0,0), Vector3(0,0,0.0))
                                                 else:
@@ -318,7 +318,7 @@ if __name__=="__main__":
                                                     raw_input()
                                                     tutorial.close_gripper()
                                                     raw_input()
-                                                    tutorial.close_gripper()
+                                                    tutorial.go_to_home_position_goal()
                                                     raw_input()
 
                                                     velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0,- 0.2))
@@ -374,12 +374,12 @@ if __name__=="__main__":
                                     rospy.sleep(7)
                                     vel = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
                                     achou_base=True
-        
+           
 
                             elif dist[p] <= 2: #a partir desta distancia anda mais devagar e para de ajustar a direcao
                                     vel = Twist(Vector3(0.075, 0, 0), Vector3(0, 0, 0))
                                    # rospy.sleep(0.1)
-                                    print("gatoooooooooooooooo")
+                                    print("perto da base!!!")
 
                                 
                         velocidade_saida.publish(vel)
@@ -387,11 +387,16 @@ if __name__=="__main__":
 
 
             if achou_base:
-                        print("miloooooooooooooooo")
+                        
                         velocidade = Twist(Vector3(0, 0, 0), Vector3(0, 0, 0))
                         velocidade_saida.publish(velocidade)
                         raw_input()
-                                    
+                        tutorial.open_gripper()
+                        raw_input()
+                        tutorial.go_to_init_joint_state()
+                        raw_input()
+                        print("acabouuuuuuu!!!!")
+        
                    # rospy.sleep(0.05)
 
 
